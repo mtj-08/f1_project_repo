@@ -1,8 +1,8 @@
-# 🏎️ Formula 1 Lakehouse Data Engineering Project — Wiki
+# 🏎️ End-to-End Data Engineering & BI Pipeline for Formula 1 Analytics (Azure Databricks, Delta Lake, Unity Catalog)
 
 **Repository:** [github.com/mtj-08/f1_project_repo](https://github.com/mtj-08/f1_project_repo) (`feature` branch)
 
-An end-to-end **Lakehouse pipeline** on **Azure Databricks + ADLS Gen2 + Delta Lake + Unity Catalog**, implementing the **Medallion Architecture** (Landing → Bronze → Silver → Gold) for Formula 1 racing data, built twice over — once as a **Single Full-Refresh Batch** pipeline and once as a **Batch-ID-driven Incremental** pipeline with MERGE/CDC semantics.
+An end-to-end **Lakehouse pipeline** on **Azure Databricks + ADLS Gen2 + Delta Lake + Unity Catalog**, implementing the **Medallion Architecture** (Landing → Bronze → Silver → Gold) for Formula 1 racing data, built twice over — once as a **Single Full-Refresh Batch** pipeline and once as a **Batch-ID-driven Incremental** pipeline with MERGE semantics.
 
 > This page is generated directly from the notebooks in the repo (cloned and inspected folder-by-folder), cross-referenced with the project's design notes, so folder names, function names, and table/column names below match the actual code.
 
@@ -87,6 +87,9 @@ f1_project_repo/  (branch: feature)
 ```
 
 Both pipelines were developed on the **`feature`** branch inside **Databricks Repos**, committed and pushed straight from the workspace, with merges going through pull requests.
+<img width="477" height="302" alt="image" src="https://github.com/user-attachments/assets/57c0aac5-6387-469a-a726-280874720f25" />
+<img width="940" height="471" alt="image" src="https://github.com/user-attachments/assets/aa8cb346-9191-4eee-9fb6-abf700737827" />
+<img width="940" height="426" alt="image" src="https://github.com/user-attachments/assets/96432d39-c4b7-47b4-bf2c-e2c3e2fef5a0" />
 
 ---
 
@@ -109,10 +112,14 @@ Gold (managed Delta tables, star schema)
         ▼
 Gold Views (v_driver_standings, v_constructor_standings) + Lakeview Dashboard
 ```
+<img width="940" height="425" alt="image" src="https://github.com/user-attachments/assets/6f4a343d-3f41-4a77-b135-38ab4e97b4a1" />
+
 
 Two ADLS Gen2 **containers** on the same storage account (`databricksf1projectext`) back the two pipelines:
 - `f1project` → full-refresh pipeline (`formula1` catalog)
 - `f1project-incr` → incremental pipeline (`formula1_incr` catalog)
+
+<img width="940" height="455" alt="image" src="https://github.com/user-attachments/assets/bfb201d0-fd38-481b-a3b8-709957849bfd" />
 
 ---
 
@@ -140,6 +147,9 @@ CREATE EXTERNAL VOLUME formula1.landing.files
 LOCATION 'abfss://f1project@databricksf1projectext.dfs.core.windows.net/landing'
 COMMENT 'landing files volume';
 ```
+<img width="940" height="309" alt="image" src="https://github.com/user-attachments/assets/ea5cbb13-8f86-4fd2-b6f1-bdd919b99a91" />
+
+<img width="769" height="289" alt="image" src="https://github.com/user-attachments/assets/31d54da4-9da5-4763-af34-5b04f34fe2e1" />
 
 **Incremental pipeline** mirrors this exactly, swapping in `formula1_incr` / `f1project-incr` and its own external location (`databricksf1projectext_f1project_incr`).
 
@@ -280,7 +290,6 @@ circuits_final_df = (circuits_clean_df1
     .withColumn("circuit_name", F.initcap(F.col("circuit_name")))
     .withColumn("locality", F.initcap(F.col("locality"))))
 ```
-> Note from the actual code: only the Circuits notebook renames `SourceFile → source_file`; the Races/Constructors/Drivers/Results/Sprints Silver tables keep the audit column as `SourceFile` (capitalized) as inherited from Bronze.
 
 **Incremental Silver** adds the batch filter and swaps the final `overwrite` write for the `write_to_silver()` MERGE helper:
 ```python
@@ -450,8 +459,16 @@ source_df = (spark.createDataFrame([(v_batch_id,)], ["batch_id"])
 
 ## 10. Jobs / Workflow Orchestration
 
-- Both pipelines are orchestrated with **Databricks Workflows (Jobs)**, on a dedicated job cluster, with **serverless compute** used for most triggered runs to control cost.
+- Both pipelines are orchestrated with **Databricks Workflows (Jobs)**, on a dedicated job cluster to control cost.
 - The incremental job passes `p_batch_id` as a **job/task-level parameter** into every notebook task, and uses a **conditional task** gated on the `has_batch` flag published by `Identify_Next_Batch`, so the medallion pipeline only runs when there's actually a new batch to process — a self-driving, idempotent design.
+
+# Full refresh Job
+<img width="940" height="534" alt="image" src="https://github.com/user-attachments/assets/1a0b4a5c-c429-4f2d-bdec-a19479f318a2" />
+
+<img width="631" height="639" alt="image" src="https://github.com/user-attachments/assets/cad0c6a1-c69e-4921-960a-e3dd8b53ebff" />
+
+# Orchestration Job for incremental processing
+<img width="841" height="150" alt="image" src="https://github.com/user-attachments/assets/42c72be0-17a1-4349-8830-313e698149ae" />
 
 ---
 
@@ -462,6 +479,14 @@ source_df = (spark.createDataFrame([(v_batch_id,)], ["batch_id"])
 2. Constructor standings — same layout at the constructor level
 3. Dominant drivers — greatness-score table, championship-share pie chart, greatness-score bar chart
 4. Dominant constructors — same at the constructor level
+
+<img width="940" height="514" alt="image" src="https://github.com/user-attachments/assets/165c3057-77a8-45f9-a4dd-984a8f4bee59" />
+
+<img width="940" height="465" alt="image" src="https://github.com/user-attachments/assets/81fefa35-0080-47c9-b805-844296bb79a3" />
+
+<img width="940" height="497" alt="image" src="https://github.com/user-attachments/assets/e03bbe35-00cc-4502-9e19-0bed90d2b24d" />
+
+<img width="940" height="478" alt="image" src="https://github.com/user-attachments/assets/264eb505-8df1-4692-a1cd-12d4f2da25c4" />
 
 ---
 
