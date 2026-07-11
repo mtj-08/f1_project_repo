@@ -87,6 +87,7 @@ f1_project_repo/  (branch: feature)
 ```
 
 Both pipelines were developed on the **`feature`** branch inside **Databricks Repos**, committed and pushed straight from the workspace, with merges going through pull requests.
+
 <img width="477" height="302" alt="image" src="https://github.com/user-attachments/assets/57c0aac5-6387-469a-a726-280874720f25" />
 <img width="940" height="471" alt="image" src="https://github.com/user-attachments/assets/aa8cb346-9191-4eee-9fb6-abf700737827" />
 <img width="940" height="426" alt="image" src="https://github.com/user-attachments/assets/96432d39-c4b7-47b4-bf2c-e2c3e2fef5a0" />
