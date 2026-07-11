@@ -259,6 +259,9 @@ source_file = f"{landing_folder_path}/{v_batch_id}/circuits.csv"
 ...
 write_to_bronze(input_df=final_circuit, target_table=table_name, batch_id=v_batch_id)
 ```
+### Entity relationship diagram of the data
+<img width="879" height="706" alt="image" src="https://github.com/user-attachments/assets/b3ee5110-2291-49b1-9e0a-4f2faca25c37" />
+
 
 ---
 
@@ -313,6 +316,10 @@ Races Silver merges on the composite key: `merge_condition = "t.season=s.season 
 ## 7. Gold Layer
 
 `04.Gold_Dimensions_Notebooks/` — builds the star schema.
+
+### Dimensional data modelling diagram
+<img width="940" height="612" alt="image" src="https://github.com/user-attachments/assets/fce09451-2449-4be7-8c64-fe60fbd8764c" />
+
 
 **`01.Building_Nationality_Region_ref.ipynb`** — a manually curated reference table (not sourced from Bronze/Silver) mapping ~40 nationalities to a `region` (Europe, North America, South America, Africa, Asia, Oceania), built via `spark.createDataFrame([Row(nationality=..., region=...), ...])` and written to `gold.ref_nationality_region`. Used to enrich both `dim_drivers` and `dim_constructors` with geography for regional analysis.
 
@@ -463,12 +470,12 @@ source_df = (spark.createDataFrame([(v_batch_id,)], ["batch_id"])
 - Both pipelines are orchestrated with **Databricks Workflows (Jobs)**, on a dedicated job cluster to control cost.
 - The incremental job passes `p_batch_id` as a **job/task-level parameter** into every notebook task, and uses a **conditional task** gated on the `has_batch` flag published by `Identify_Next_Batch`, so the medallion pipeline only runs when there's actually a new batch to process — a self-driving, idempotent design.
 
-# Full refresh Job
+### Full refresh Job
 <img width="940" height="534" alt="image" src="https://github.com/user-attachments/assets/1a0b4a5c-c429-4f2d-bdec-a19479f318a2" />
 
 <img width="631" height="639" alt="image" src="https://github.com/user-attachments/assets/cad0c6a1-c69e-4921-960a-e3dd8b53ebff" />
 
-# Orchestration Job for incremental processing
+### Orchestration Job for incremental processing
 <img width="841" height="150" alt="image" src="https://github.com/user-attachments/assets/42c72be0-17a1-4349-8830-313e698149ae" />
 
 ---
